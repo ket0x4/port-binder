@@ -9,14 +9,6 @@
 
 #include "binder.h"
 
-#ifndef SERVER_IP
-#define SERVER_IP "127.0.0.1"
-#endif
-
-#ifndef SERVER_PORT
-#define SERVER_PORT 8080
-#endif
-
 redirect *p;
 
 int main(int argc, char** argv) {

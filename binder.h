@@ -6,6 +6,8 @@
 
 #include <stdbool.h>
 
+#include "config.h"
+
 typedef struct _sock {
     struct sockaddr_in address;
     int server_fd;

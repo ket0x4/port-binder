@@ -1,5 +1,22 @@
-build:
-	gcc server.c common.c -o server -I. -g3 -Wall -Wextra -Werror $(CFLAGS)
-	gcc client.c common.c -o client -I. -g3 -Wall -Wextra -Werror $(CFLAGS)
+# Makefile for building server and client applications
+
+# Compiler
+CC = gcc
+
+# Compiler flags
+CFLAGS = -g3 -Wall -Wextra -Werror
+
+# Targets
+TARGETS = server client
+
+# Build rules
+all: $(TARGETS)
+
+%: %.c
+	$(CC) -I. $< common.c -o $@ $(CFLAGS)
+
+# Clean rule
 clean:
-	rm -f server client
+	rm -f $(TARGETS)
+
+.PHONY: all clean
