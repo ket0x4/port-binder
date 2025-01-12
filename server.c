@@ -57,9 +57,9 @@ int main() {
 
     signal(SIGPIPE, SIG_IGN);
 
-    sock_obj sock = create_socket(PORT);
+    sock_obj sock = create_socket(SERVER_PORT);
 
-    printf("Server listening on port %d\n", PORT);
+    printf("Server listening on port %d\n", SERVER_PORT);
     int addrlen = sizeof(sock.address);
     while (1) {
         // Accept incoming connections
@@ -67,7 +67,7 @@ int main() {
         if ((c->client_socket = accept(sock.server_fd, (struct sockaddr *)&sock.address, (socklen_t*)&addrlen)) >= 0) {
             printf("New connection accepted\n");
             char buffer[BUFFER_SIZE] = {0};
-            int readed = read(c->client_socket, buffer, BUFFER_SIZE);
+            int readed = read(c->client_socket, buffer, 1024);
             (void) readed;
             if(readed <= 0){
                 close(c->client_socket);

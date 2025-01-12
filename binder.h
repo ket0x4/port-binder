@@ -1,6 +1,3 @@
-#define PORT 8080
-#define BUFFER_SIZE 1024
-
 #include <fcntl.h>
 #define is_sock(A) ((A > 0) && fcntl(A, F_GETFD) != -1)
 

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         }
         char buffer[BUFFER_SIZE];
         strcpy(buffer, argv[2]);
-        write(server.server_fd, buffer, BUFFER_SIZE);
+        write(server.server_fd, buffer, 1024);
 
 		puts("Connect");
 		p[0].fd1 = server.server_fd;

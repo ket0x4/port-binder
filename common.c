@@ -9,9 +9,6 @@
 
 #include "binder.h"
 
-#define PORT 8080
-#define BUFFER_SIZE 1024
-
 void set_non_blocking(int sockfd) {
     int flags = fcntl(sockfd, F_GETFL, 0);
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
