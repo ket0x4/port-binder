@@ -2,7 +2,7 @@
 #define BUFFER_SIZE 1024
 
 #include <fcntl.h>
-#define is_sock(A) A > 0 && fcntl(A, F_GETFD) != -1
+#define is_sock(A) ((A > 0) && fcntl(A, F_GETFD) != -1)
 
 #include <stdbool.h>
 
@@ -10,6 +10,7 @@ typedef struct _sock {
     struct sockaddr_in address;
     int server_fd;
     char buffer[BUFFER_SIZE];
+    bool status;
 } sock_obj;
 
 typedef struct _redirect {

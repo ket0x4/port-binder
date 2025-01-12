@@ -10,34 +10,37 @@
 
 #include "binder.h"
 
-typedef struct _server_info {
-    sock_obj server_sock;
-    sock_obj client_sock;
-}
+typedef struct _client {
+    int client_socket;
+    int port; 
+} client;
 
 void *handle_client(void *arg) {
-    int client_socket = *(int *)arg;
+    client *c = (client*)arg;
     struct sockaddr_in client_address;
     socklen_t addr_len = sizeof(client_address);
 
     // Get client information
-    getpeername(client_socket, (struct sockaddr *)&client_address, &addr_len);
+    getpeername(c->client_socket, (struct sockaddr *)&client_address, &addr_len);
     char *client_ip = inet_ntoa(client_address.sin_addr);
     int client_port = ntohs(client_address.sin_port);
 
     printf("Client connected: IP = %s, Port = %d\n", client_ip, client_port);
 
-    sock_obj sock = create_socket(8000);
+    sock_obj sock = create_socket(c->port);
+    if(!sock.status){
+        return NULL;
+    }
 
     // Read data from the client
     // Create client port bind
     int addrlen = sizeof(sock.address);
-    int new_socket = accept(sock.server_fd, (struct sockaddr*)&sock.address, &addrlen);
+    int new_socket = accept(sock.server_fd, (struct sockaddr*)&sock.address, (socklen_t*)&addrlen);
     // read data from bind
     redirect *p = malloc(sizeof(pipe)*2);
     p[0].fd1 = new_socket;
-    p[0].fd2 = client_socket;
-    p[1].fd1 = client_socket;
+    p[0].fd2 = c->client_socket;
+    p[1].fd1 = c->client_socket;
     p[1].fd2 = new_socket;
     
     pthread_t thread_id1;
@@ -46,7 +49,7 @@ void *handle_client(void *arg) {
     pthread_create(&thread_id2, NULL, async_pipe, (void*)(p+1));
     pthread_join(thread_id1, NULL);
     printf("Client disconnected: IP = %s, Port = %d\n", client_ip, client_port);
-    close(new_socket);
+    close(sock.server_fd);
     return NULL;
 }
 
@@ -54,18 +57,25 @@ int main() {
 
     signal(SIGPIPE, SIG_IGN);
 
-    int server_fd, *new_socket;
     sock_obj sock = create_socket(PORT);
 
     printf("Server listening on port %d\n", PORT);
     int addrlen = sizeof(sock.address);
     while (1) {
         // Accept incoming connections
-        new_socket = malloc(sizeof(int)); // Allocate memory for the socket descriptor
-        if ((*new_socket = accept(sock.server_fd, (struct sockaddr *)&sock.address, (socklen_t*)&addrlen)) >= 0) {
+        client *c = malloc(sizeof(client));
+        if ((c->client_socket = accept(sock.server_fd, (struct sockaddr *)&sock.address, (socklen_t*)&addrlen)) >= 0) {
             printf("New connection accepted\n");
+            char buffer[BUFFER_SIZE] = {0};
+            int readed = read(c->client_socket, buffer, BUFFER_SIZE);
+            (void) readed;
+            if(readed <= 0){
+                close(c->client_socket);
+                continue;
+            }
+            c->port = atoi(buffer);
             pthread_t thread_id;
-            pthread_create(&thread_id, NULL, handle_client, new_socket);
+            pthread_create(&thread_id, NULL, handle_client, c);
             pthread_detach(thread_id);
         } else {
             if (errno != EWOULDBLOCK) {

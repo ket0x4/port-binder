@@ -21,11 +21,12 @@ void set_non_blocking(int sockfd) {
 sock_obj create_socket(int port){
     sock_obj sock;
     strcpy(sock.buffer,"");
+    sock.status = false;
     int opt = 1;
     // Create socket file descriptor
     if ((sock.server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
-        exit(EXIT_FAILURE);
+        return sock;
     }
 
     // Set socket options
@@ -41,27 +42,28 @@ sock_obj create_socket(int port){
 
     if (bind(sock.server_fd, (struct sockaddr *)&sock.address, sizeof(sock.address)) < 0) {
         perror("bind failed");
-        exit(EXIT_FAILURE);
+        return sock;
     }
 
     // Start listening for incoming connections
     if (listen(sock.server_fd, 3) < 0) {
         perror("listen");
-        exit(EXIT_FAILURE);
+        return sock;
     }
+    sock.status = true;
     return sock;
 }
 
 sock_obj connect_socket(char* server, int port) {
     sock_obj sock;
+    sock.status = false;
     struct sockaddr_in server_addr;
-    char buffer[BUFFER_SIZE];
 
     // Create socket
     sock.server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock.server_fd < 0) {
         perror("Socket creation failed");
-        exit(EXIT_FAILURE);
+        return sock;
     }
 
     // Configure server address
@@ -73,15 +75,16 @@ sock_obj connect_socket(char* server, int port) {
     if (inet_pton(AF_INET, server, &server_addr.sin_addr) <= 0) {
         perror("Invalid address/ Address not supported");
         close(sock.server_fd);
-        exit(EXIT_FAILURE);
+        return sock;
     }
 
     // Connect to the server
     if (connect(sock.server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Connection failed");
         close(sock.server_fd);
-        exit(EXIT_FAILURE);
+        return sock;
     }
+    sock.status = true;
     return sock;
 }
 
@@ -106,6 +109,7 @@ void *async_pipe(void *arg){
     }
     printf("Pipe finish %d %d\n", p.fd1, p.fd2);
     pp[0].status = false;
+    return NULL;
 }
 
 

@@ -5,21 +5,37 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "binder.h"
 
+#ifndef SERVER_IP
 #define SERVER_IP "127.0.0.1"
+#endif
+
+#ifndef SERVER_PORT
 #define SERVER_PORT 8080
+#endif
 
 redirect *p;
 
-int main() {
+int main(int argc, char** argv) {
+    if(argc < 3) {
+        puts("Usage: port-binder <source> <destination>");
+    }
     signal(SIGPIPE, SIG_IGN);
 
     p = malloc(sizeof(redirect));
     while(1){
-        sock_obj client = connect_socket("127.0.0.1", 22);
-        sock_obj server = connect_socket(SERVER_IP, SERVER_PORT);		
+        sock_obj client = connect_socket("127.0.0.1", atoi(argv[1]));
+        sock_obj server = connect_socket(SERVER_IP, SERVER_PORT);
+        if(!(client.status && server.status)){
+            return 1;
+        }
+        char buffer[BUFFER_SIZE];
+        strcpy(buffer, argv[2]);
+        write(server.server_fd, buffer, BUFFER_SIZE);
+
 		puts("Connect");
 		p[0].fd1 = server.server_fd;
 		p[0].fd2 = client.server_fd;
@@ -34,6 +50,7 @@ int main() {
 		while(p[0].status && p[1].status){
 		    usleep(1000000);
 		}
+		puts("disconnect");
 		close(client.server_fd);
 		//close(server.server_fd);
 	}
