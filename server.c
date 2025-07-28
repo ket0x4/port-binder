@@ -37,7 +37,7 @@ void *handle_client(void *arg) {
     int addrlen = sizeof(sock.address);
     int new_socket = accept(sock.server_fd, (struct sockaddr*)&sock.address, (socklen_t*)&addrlen);
     // read data from bind
-    redirect *p = malloc(sizeof(pipe)*2);
+    redirect *p = malloc(sizeof(redirect)*2);
     p[0].fd1 = new_socket;
     p[0].fd2 = c->client_socket;
     p[1].fd1 = c->client_socket;
