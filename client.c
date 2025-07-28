@@ -13,7 +13,7 @@ redirect *p;
 
 struct port_map {
     int client_port;
-    int server_port;
+	int server_port;
 };
 
 void *forward_ports(void *arg) {
@@ -23,6 +23,7 @@ void *forward_ports(void *arg) {
         sock_obj client = connect_socket("127.0.0.1", map->client_port);
         sock_obj server = connect_socket(SERVER_IP, SERVER_PORT);
         if(!(client.status && server.status)){
+            printf("[WARN] Failed to connect: local port %d, server port %d\n", map->client_port, map->server_port);
             free(p);
             return NULL;
         }
@@ -30,6 +31,7 @@ void *forward_ports(void *arg) {
         snprintf(buffer, BUFFER_SIZE, "%d", map->server_port);
         write(server.server_fd, buffer, 1024);
         puts("Connect");
+        printf("[INFO] Connecting: local port %d -> server port %d\n", map->client_port, map->server_port);
         p[0].fd1 = server.server_fd;
         p[0].fd2 = client.server_fd;
         p[1].fd1 = client.server_fd;
@@ -44,6 +46,7 @@ void *forward_ports(void *arg) {
             usleep(1000000);
         }
         puts("disconnect");
+        printf("[INFO] Disconnected\n");
         close(client.server_fd);
         //close(server.server_fd);
     }
@@ -76,7 +79,7 @@ int main(int argc, char** argv) {
         return 0;
     }
     if(argc < 3) {
-        puts("Usage: port-binder <source> <destination>");
+        printf("[INFO] Usage: port-binder <source> <destination>\n");
     }
 
     p = malloc(sizeof(redirect));
@@ -84,6 +87,7 @@ int main(int argc, char** argv) {
         sock_obj client = connect_socket("127.0.0.1", atoi(argv[1]));
         sock_obj server = connect_socket(SERVER_IP, SERVER_PORT);
         if(!(client.status && server.status)){
+            printf("[WARN] Failed to connect: local port %d, server port %d\n", atoi(argv[1]), atoi(argv[2]));
             return 1;
         }
         char buffer[BUFFER_SIZE];
@@ -91,6 +95,7 @@ int main(int argc, char** argv) {
         write(server.server_fd, buffer, 1024);
 
 		puts("Connect");
+		printf("[INFO] Connecting: local port %d -> server port %d\n", atoi(argv[1]), atoi(argv[2]));
 		p[0].fd1 = server.server_fd;
 		p[0].fd2 = client.server_fd;
 		p[1].fd1 = client.server_fd;
@@ -105,6 +110,7 @@ int main(int argc, char** argv) {
 		    usleep(1000000);
 		}
 		puts("disconnect");
+		printf("[INFO] Disconnected\n");
 		close(client.server_fd);
 		//close(server.server_fd);
 	}

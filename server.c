@@ -25,7 +25,7 @@ void *handle_client(void *arg) {
     char *client_ip = inet_ntoa(client_address.sin_addr);
     int client_port = ntohs(client_address.sin_port);
 
-    printf("Client connected: IP = %s, Port = %d\n", client_ip, client_port);
+    printf("[INFO] Client connected: IP=%s, Port=%d\n", client_ip, client_port);
 
     sock_obj sock = create_socket(c->port);
     if(!sock.status){
@@ -48,7 +48,7 @@ void *handle_client(void *arg) {
     pthread_t thread_id2;
     pthread_create(&thread_id2, NULL, async_pipe, (void*)(p+1));
     pthread_join(thread_id1, NULL);
-    printf("Client disconnected: IP = %s, Port = %d\n", client_ip, client_port);
+    printf("[INFO] Client disconnected: IP=%s, Port=%d\n", client_ip, client_port);
     close(sock.server_fd);
     return NULL;
 }
@@ -59,13 +59,13 @@ int main() {
 
     sock_obj sock = create_socket(SERVER_PORT);
 
-    printf("Server listening on port %d\n", SERVER_PORT);
+    printf("[INFO] Server listening on port %d\n", SERVER_PORT);
     int addrlen = sizeof(sock.address);
     while (1) {
         // Accept incoming connections
         client *c = malloc(sizeof(client));
         if ((c->client_socket = accept(sock.server_fd, (struct sockaddr *)&sock.address, (socklen_t*)&addrlen)) >= 0) {
-            printf("New connection accepted\n");
+            printf("[INFO] New connection accepted\n");
             char buffer[BUFFER_SIZE] = {0};
             int readed = read(c->client_socket, buffer, 1024);
             (void) readed;
@@ -75,11 +75,27 @@ int main() {
             }
             c->port = atoi(buffer);
             if (c->port < RANGE_START || c->port > RANGE_END) {
-                printf("Rejected port %d: out of allowed range [%d-%d]\n", c->port, RANGE_START, RANGE_END);
+                printf("[WARN] Rejected port %d: out of allowed range [%d-%d]\n", c->port, RANGE_START, RANGE_END);
                 close(c->client_socket);
                 free(c);
                 continue;
             }
+            // Check if port is already in use
+            struct sockaddr_in test_addr;
+            memset(&test_addr, 0, sizeof(test_addr));
+            test_addr.sin_family = AF_INET;
+            test_addr.sin_addr.s_addr = INADDR_ANY;
+            test_addr.sin_port = htons(c->port);
+            int test_fd = socket(AF_INET, SOCK_STREAM, 0);
+            int bind_result = bind(test_fd, (struct sockaddr*)&test_addr, sizeof(test_addr));
+            if (bind_result == -1 && errno == EADDRINUSE) {
+                printf("[WARN] Rejected port %d: already in use by another process\n", c->port);
+                close(test_fd);
+                close(c->client_socket);
+                free(c);
+                continue;
+            }
+            close(test_fd);
             pthread_t thread_id;
             pthread_create(&thread_id, NULL, handle_client, c);
             pthread_detach(thread_id);
