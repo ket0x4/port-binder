@@ -17,3 +17,7 @@
 ./client <source-port> <remote-port>
 ```
 
+Or you can use `port.conf` file to specify the ports to bind.
+
+```./server -c port.conf
+```
