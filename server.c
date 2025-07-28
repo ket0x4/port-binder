@@ -74,6 +74,12 @@ int main() {
                 continue;
             }
             c->port = atoi(buffer);
+            if (c->port < RANGE_START || c->port > RANGE_END) {
+                printf("Rejected port %d: out of allowed range [%d-%d]\n", c->port, RANGE_START, RANGE_END);
+                close(c->client_socket);
+                free(c);
+                continue;
+            }
             pthread_t thread_id;
             pthread_create(&thread_id, NULL, handle_client, c);
             pthread_detach(thread_id);
