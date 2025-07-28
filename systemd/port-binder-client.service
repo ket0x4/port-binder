@@ -1,0 +1,13 @@
+[Unit]
+Description=Port Binder Client
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/client -c /tmp/port.conf
+Restart=on-failure
+User=nobody
+WorkingDirectory=/tmp
+
+[Install]
+WantedBy=multi-user.target
